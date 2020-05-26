@@ -10,7 +10,7 @@ panellayout = html.Div([
                     dbc.Row(
                         dbc.Col(
                             [
-                                html.H2('Admin page.')
+                                html.H2('to be implemented')
 
                             ],
                         ),

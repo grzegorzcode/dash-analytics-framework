@@ -1,6 +1,8 @@
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_core_components as dcc
+import plotly.offline as pyo
+import plotly.graph_objs as go
 
 
 statslayout = html.Div([
@@ -10,24 +12,14 @@ statslayout = html.Div([
                     dbc.Row(
                         dbc.Col(
                             [
-                                html.H2('Stats page.')
-
+                                dcc.Graph(id='barplot', figure={
+                                    'data': [go.Bar(x=['Correct', 'incorrect'], y=[0, 0])],
+                                    'layout': go.Layout(title='Current stats')
+                                }),
                             ],
                         ),
-                        justify='center'
+                        # justify='center'
                     ),
-
-                    html.Br(),
-
-                    dbc.Row(
-                        dbc.Col(
-                            html.H3("look at this"),
-                            width=4
-                        ),
-                        justify='center'
-                    ),
-
-                    html.Br()
                 ],
             )
         ]

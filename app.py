@@ -16,6 +16,8 @@ from pages.stats import statslayout
 from pages.admin import panellayout
 from pages.navigationbar import pageheader
 from backend.dbutils import add_user_session_info
+from backend.quizutils import get_next_question, get_questions_count, save_and_check_answer
+import numpy as np
 
 
 # login layout content
@@ -66,7 +68,7 @@ app.layout = html.Div(
     [Input('url', 'pathname')]
 )
 def router(url):
-    args = ('Logout' if session['authed'] else '', 'Admin' if session['isadmin'] else '', f"Welcome noble {session['user'].upper()}!" if session['user'] else '')
+    args = ('Logout' if session['authed'] else '', 'Admin' if session['isadmin'] else '', f"Welcome {session['user'].upper()}!" if session['user'] else '')
     if url == '/home' or url == '/':
         add_user_session_info(session['user'], url, session['session_id'], level=2)
         return (home_layout(),) + args
@@ -87,7 +89,7 @@ def router(url):
         session['isadmin'] = False
         session['user'] = ''
         session['session_id'] = ''
-        return (login_layout(),) + ('', 'Admin' if session['isadmin'] else '', f"Welcome noble {session['user'].upper()}!" if session['user'] else '')
+        return (login_layout(),) + ('', 'Admin' if session['isadmin'] else '', f"Welcome {session['user'].upper()}!" if session['user'] else '')
     else:
         return (login_layout(),) + args
 
@@ -126,7 +128,33 @@ def login_auth(n_clicks, user, pw):
 # callbacks
 ###############################################################################
 
-
+@app.callback(
+    # output question text
+    [Output('question-text', 'children'),
+     # output button text
+     Output('button-a', 'children'), Output('button-b', 'children'), Output('button-c', 'children'), Output('button-d', 'children'),
+     #output progress tracker
+     Output('progress-tracker', 'value'), Output('progress-tracker', 'children')],
+    #input buttons
+    [Input('button-a', 'n_clicks'),Input('button-b', 'n_clicks'), Input('button-c', 'n_clicks'),Input('button-d', 'n_clicks'),
+     Input('button-a', 'n_clicks_timestamp'), Input('button-b', 'n_clicks_timestamp'), Input('button-c', 'n_clicks_timestamp'),Input('button-d', 'n_clicks_timestamp')],
+    # state based on question text
+    [State('question-text', 'children')])
+def show_answers(n_clicks,n_clicks2,n_clicks3,n_clicks4, n_clickst,n_clickst2,n_clickst3,n_clickst4, value):
+    nrclicks = n_clicks + n_clicks2 + n_clicks3 + n_clicks4
+    if nrclicks == 0:
+        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+    else:
+        next_question = get_next_question('GEO', nrclicks)
+        get_questions_nr = get_questions_count('GEO')
+        get_perc = round((nrclicks-1)*100/get_questions_nr)
+        if nrclicks <= get_questions_nr:
+            which = (np.array([item if item is not None else 0 for item in [n_clickst, n_clickst2, n_clickst3, n_clickst4]]).argmax())
+            whichdict = {0: 'A', 1: 'B', 2: 'C', 3: 'D'}
+            save_and_check_answer('GEO', nrclicks, whichdict[which], session['user'])
+            return f'{next_question[0]}', f'{next_question[1]}', f'{next_question[2]}', f'{next_question[3]}', f'{next_question[4]}', get_perc, f"{get_perc}%"
+        else:
+            return f'COMPLETED, CHECK STATS PAGE', 'DONE', 'DONE', 'DONE', 'DONE', get_perc, f"{get_perc}%"
 ###############################################################################
 # run app
 ###############################################################################
