@@ -14,17 +14,17 @@
 
 #####   QUIZ DB
 
-# from backend.quizsetup import recreate_database, recreate_initial_quiz
-from backend.quizutils import get_questions, get_next_question, get_questions_count, get_answers, get_all_users_answered
+from backend.quizsetup import recreate_database, recreate_initial_quiz
+# from backend.quizutils import get_questions, get_next_question, get_questions_count, get_answers, get_all_users_answered, get_all_questions
 
-# recreate_database()
-# recreate_initial_quiz()
+recreate_database()
+recreate_initial_quiz()
 
 # print(get_questions('GEO'))
 
 # print(get_next_question('GEO', 1))
 
 #
-print(get_answers('GEO', 'gc'))
+# print(get_all_questions())
 
 # print(get_all_users_answered('GEO'))

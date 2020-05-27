@@ -1,5 +1,6 @@
 # package imports
 import dash
+import dash_table
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_core_components as dcc
@@ -11,6 +12,10 @@ import numpy as np
 import pandas as pd
 import plotly.offline as pyo
 import plotly.graph_objs as go
+import io
+import base64
+import datetime
+import time
 # local imports
 from auth import authenticate_user, authenticate_admin_user, validate_login_session
 from server import app, server
@@ -20,7 +25,7 @@ from pages.stats import statslayout
 from pages.admin import panellayout
 from pages.navigationbar import pageheader
 from backend.dbutils import add_user_session_info
-from backend.quizutils import get_next_question, get_questions_count, save_and_check_answer, get_all_users_answered, get_answers
+from backend.quizutils import get_next_question, get_questions_count, save_and_check_answer, get_all_users_answered, get_answers, get_all_questions, write_uploaded_data
 
 
 # login layout content
@@ -126,6 +131,44 @@ def login_auth(n_clicks, user, pw):
     session['session_id'] = ''
     return no_update, dbc.Alert('Incorrect credentials.', color='danger', dismissable=True)
 
+###############################################################################
+# helper functions
+###############################################################################
+
+
+def parse_contents(contents, filename, date):
+    content_type, content_string = contents.split(',')
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'xlsx' in filename:
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
+            write_uploaded_data(df)
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
+
+    return html.Div([
+        html.H5(filename),
+        html.H6(datetime.datetime.fromtimestamp(date)),
+
+        dash_table.DataTable(
+            data=df.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in df.columns]
+        ),
+
+        html.Hr(),  # horizontal line
+
+        # For debugging, display the raw contents provided by the web browser
+        html.Div('Raw Content'),
+        html.Pre(contents[0:200] + '...', style={
+            'whiteSpace': 'pre-wrap',
+            'wordBreak': 'break-all'
+        })
+    ])
+
 
 ###############################################################################
 # callbacks
@@ -207,9 +250,35 @@ def update_graph(users):
     return fig
 
 
+# THIS IS CALLBACK RESPONSIBLE OF UPLOADING FILES
+@app.callback(Output('output-data-upload', 'children'),
+              [Input('upload-data', 'contents')],
+              [State('upload-data', 'filename'),
+               State('upload-data', 'last_modified')])
+def update_output(contents, name, upload_date):
+    if contents is not None:
+        # print(contents)
+        # print(name)
+        # print(upload_date)
+        children = parse_contents(contents, name, upload_date)
+        return children
+
+
+# THIS IS CALLBACK RESPONSIBLE OF SHOWING QUIZ TABLE
+@app.callback(Output('all-data-table', 'children'),  [Input('output-data-upload', 'children')])
+def admin_table_update(trigger):
+    df = get_all_questions()
+    return html.Div([
+        dash_table.DataTable(
+            data=df.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in df.columns]
+        ),
+    ])
+
 ###############################################################################
 # run app
 ###############################################################################
+
 
 if __name__ == "__main__":
     

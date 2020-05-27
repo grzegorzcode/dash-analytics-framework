@@ -4,3 +4,5 @@ sqlalchemy
 shortuuid
 numpy
 pandas
+dash_table
+xlrd

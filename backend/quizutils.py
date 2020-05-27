@@ -69,5 +69,19 @@ def get_all_users_answered(quiz):
         return [x[0] for x in users]
 
 
+def get_all_questions():
+    # with engine.connect() as s:
+    #     res = pd.read_sql("select * from useranswers", con=s)
+    #     return res
+    with engine.connect() as s:
+        stmt = pd.read_sql(f"""select * from questions q""", con=s)
+        return stmt
 
 
+def write_uploaded_data(df):
+    with engine.connect() as s:
+        # TODO: Logic behind this and resetting answers stats
+        # stmt = pd.read_sql(f"""select * from questions q""", con=s)
+        # print(stmt)
+        # newdf = pd.concat([stmt.drop('id', axis=1), df]).drop_duplicates(keep='last')
+        df.to_sql('questions', con=s, if_exists='replace', index_label='id')
