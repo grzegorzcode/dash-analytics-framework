@@ -40,8 +40,8 @@ class Questions(Base):
     correctanswer = Column(VARCHAR(1))
 
 
-class Answers(Base):
-    __tablename__ = "answers"
+class Useranswers(Base):
+    __tablename__ = "useranswers"
     id = Column(Integer, primary_key=True)
     user = Column(VARCHAR(100))
     quiz = Column(VARCHAR(100))

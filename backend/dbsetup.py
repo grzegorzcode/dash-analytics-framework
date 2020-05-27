@@ -17,5 +17,6 @@ def recreate_initial_users():
         s.add(normaluser)
 
 
-recreate_database()
-recreate_initial_users()
+if __name__ == '__main__':
+    recreate_database()
+    recreate_initial_users()

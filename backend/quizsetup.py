@@ -17,10 +17,17 @@ def recreate_initial_quiz():
         s.add(question)
         question = Questions(quiz='GEO', question='where are you now', questionid=3, optiona='earth', optionb='jupyter', optionc='nubiru', optiond='moon', correctanswer='A')
         s.add(question)
+        answer = Useranswers(user='gc', quiz='GEO', questionid=1, answer='C')
+        s.add(answer)
+        answer = Useranswers(user='gc', quiz='GEO', questionid=2, answer='C')
+        s.add(answer)
+        answer = Useranswers(user='gc', quiz='GEO', questionid=3, answer='C')
+        s.add(answer)
 
 
-recreate_database()
-recreate_initial_quiz()
+if __name__ == '__main__':
+    recreate_database()
+    recreate_initial_quiz()
 
 
 

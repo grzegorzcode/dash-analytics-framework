@@ -7,6 +7,10 @@ from dash.dependencies import Input, Output, State
 from dash import no_update
 from flask import session, copy_current_request_context
 import shortuuid
+import numpy as np
+import pandas as pd
+import plotly.offline as pyo
+import plotly.graph_objs as go
 # local imports
 from auth import authenticate_user, authenticate_admin_user, validate_login_session
 from server import app, server
@@ -16,8 +20,7 @@ from pages.stats import statslayout
 from pages.admin import panellayout
 from pages.navigationbar import pageheader
 from backend.dbutils import add_user_session_info
-from backend.quizutils import get_next_question, get_questions_count, save_and_check_answer
-import numpy as np
+from backend.quizutils import get_next_question, get_questions_count, save_and_check_answer, get_all_users_answered, get_answers
 
 
 # login layout content
@@ -128,6 +131,8 @@ def login_auth(n_clicks, user, pw):
 # callbacks
 ###############################################################################
 
+
+# THIS IS CALLBACK RESPONSIBLE OF UPDATING QUESTIONS MECHANISM
 @app.callback(
     # output question text
     [Output('question-text', 'children'),
@@ -144,17 +149,64 @@ def show_answers(n_clicks,n_clicks2,n_clicks3,n_clicks4, n_clickst,n_clickst2,n_
     nrclicks = n_clicks + n_clicks2 + n_clicks3 + n_clicks4
     if nrclicks == 0:
         return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+    elif nrclicks == 1:
+        next_question = get_next_question('GEO', nrclicks)
+        return f'{next_question[0]}', f'{next_question[1]}', f'{next_question[2]}', f'{next_question[3]}', f'{next_question[4]}', dash.no_update, dash.no_update
     else:
         next_question = get_next_question('GEO', nrclicks)
         get_questions_nr = get_questions_count('GEO')
         get_perc = round((nrclicks-1)*100/get_questions_nr)
-        if nrclicks <= get_questions_nr:
-            which = (np.array([item if item is not None else 0 for item in [n_clickst, n_clickst2, n_clickst3, n_clickst4]]).argmax())
-            whichdict = {0: 'A', 1: 'B', 2: 'C', 3: 'D'}
-            save_and_check_answer('GEO', nrclicks, whichdict[which], session['user'])
+        #if nrclicks <= get_questions_nr + 1:
+        which = np.array([item if item is not None else 0 for item in [n_clickst, n_clickst2, n_clickst3, n_clickst4]]).argmax()
+        whichdict = {0: 'A', 1: 'B', 2: 'C', 3: 'D'}
+        #print('GEO', nrclicks - 1, whichdict[which], session['user'])
+        if nrclicks <= get_questions_nr + 1:
+            save_and_check_answer('GEO', nrclicks - 1, whichdict[which], session['user'])
+        try:
             return f'{next_question[0]}', f'{next_question[1]}', f'{next_question[2]}', f'{next_question[3]}', f'{next_question[4]}', get_perc, f"{get_perc}%"
-        else:
-            return f'COMPLETED, CHECK STATS PAGE', 'DONE', 'DONE', 'DONE', 'DONE', get_perc, f"{get_perc}%"
+        except TypeError:
+            return f'COMPLETED, CHECK STATS PAGE', 'DONE', 'DONE', 'DONE', 'DONE', 100, "100%"
+
+
+# THIS IS CALLBACK RESPONSIBLE OF SETTING STATS TO ALL USERS
+@app.callback(Output('user-selection', 'options'), [Input('url', 'pathname')])
+def refresh_user_list(pathname):
+    if pathname == '/stats':
+        allusers = get_all_users_answered('GEO')
+        options = []
+        for user in allusers:
+            options.append({'label': user, 'value': user})
+        return options
+    return no_update
+
+
+# THIS IS CALLBACK RESPONSIBLE OF UPDATING STATS BARPLOT
+@app.callback(Output('barplot', 'figure'), [Input('user-selection', 'value')],)
+def update_graph(users):
+    traces = []
+    for user in users:
+        if user != 'UPDATE-VIEW':
+            df = get_answers('GEO', user)
+            correct = 0
+            incorrect = 0
+            try:
+                correct = df['ISCORRECT'].value_counts().loc['Y']
+            except Exception:
+                pass
+            try:
+                incorrect = df['ISCORRECT'].value_counts().loc['N']
+            except Exception:
+                pass
+            traces.append(
+                go.Bar(x=['Correct', 'Incorrect'], y=[correct, incorrect], name=user, text=[correct, incorrect], textposition='auto', texttemplate='%{text:.1s}')
+            )
+    fig = {
+        'data': traces,
+        'layout': go.Layout(title='Current stats', yaxis=dict(dtick=1), xaxis=dict(categoryorder='category ascending'), barmode='group')
+    }
+    return fig
+
+
 ###############################################################################
 # run app
 ###############################################################################

@@ -3,3 +3,4 @@ dash-bootstrap-components
 sqlalchemy
 shortuuid
 numpy
+pandas
