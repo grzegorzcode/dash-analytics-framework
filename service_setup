@@ -1,0 +1,43 @@
+sudo cat /etc/systemd/system/myquiz.service
+[Unit]
+Description=Gunicorn instance to serve quiz project
+After=network.target
+
+[Service]
+User=daf
+Group=www-data
+WorkingDirectory=/home/daf/quiz
+Environment="PATH=/home/daf/quiz/quizvenv/bin"
+ExecStart=/home/daf/quiz/quizvenv/bin/gunicorn --workers 3 --bind unix:quizproj.sock -m 007 app:server
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+sudo systemctl start myquiz
+sudo systemctl enable myquiz
+Created symlink /etc/systemd/system/multi-user.target.wants/myquiz.service → /etc/systemd/system/myquiz.service.
+sudo systemctl status myquiz
+
+
+
+cat /etc/nginx/sites-available/myquiz
+server {
+    listen 80;
+    server_name beast-analytics.com www.beast-analytics.com;
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/home/daf/quiz/quizproj.sock;
+    }
+}
+
+
+sudo ln -s /etc/nginx/sites-available/myquiz /etc/nginx/sites-enabled
+
+based on:
+https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-18-04
+https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-18-04
+https://www.digitalocean.com/community/tutorials/ufw-essentials-common-firewall-rules-and-commands
+https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-18-04

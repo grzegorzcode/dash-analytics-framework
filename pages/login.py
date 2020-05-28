@@ -13,6 +13,7 @@ loginlayout = html.Div(
                             dbc.Card(
                                 [
                                     html.H4('Login', className='card-title'),
+                                    html.H6('google auth available soon', style={'color': 'grey'}),
                                     dbc.Input(id='login-user', placeholder='User'),
                                     html.Br(),
                                     dbc.Input(id='login-password', placeholder='Assigned password', type='password'),

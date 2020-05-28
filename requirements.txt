@@ -1,0 +1,9 @@
+dash
+dash-bootstrap-components
+sqlalchemy
+shortuuid
+numpy
+pandas
+dash_table
+xlrd
+gunicorn
