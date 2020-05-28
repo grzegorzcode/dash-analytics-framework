@@ -6,3 +6,4 @@ numpy
 pandas
 dash_table
 xlrd
+gunicorn

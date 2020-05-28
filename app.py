@@ -283,5 +283,7 @@ def admin_table_update(trigger):
 if __name__ == "__main__":
     
     app.run_server(
-        debug=True
+        debug=False
     )
+
+    #gunicorn app:server --bind 0.0.0.0:5000
